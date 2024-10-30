@@ -12,27 +12,23 @@ def hello_world_fn(username: str) -> tuple[str, str]:
 def html_parser(html: str) -> str:
     result = ''
     start = html.find('<')
-    stage = 0
-    inside_tag = 0
+    pre, stage, inside_tag = start, 0, 0
     while start >=0:
-        if 'p>' == html[start+1:start+3]:
-            pre = start+3
-            stage += 1
-        elif '/p>' == html[start+1:start+4]:
+        if start > pre and stage > 0 and inside_tag <= 0:
             content = html[pre:start].strip()
             if content:
                 result += html[pre:start].strip() + '\n'
-            stage -= 1
+        
+        if inside_tag <= 0 and 'p>' == html[start+1:start+3]:
+            stage += 1
+        elif inside_tag <= 0 and '/p>' == html[start+1:start+4]:
+            stage = max(0, stage-1)
         elif stage > 0:
-            if inside_tag <= 0:
-                content = html[pre:start].strip()
-                if content:
-                    result += html[pre:start].strip() + '\n'
             if '/' == html[start+1]:
-                inside_tag -= 1
+                inside_tag = max(0, inside_tag-1)
             else:
                 inside_tag += 1
-            pre = html.find('>', start)+1
+        pre = html.find('>', start)+1
         start = html.find('<', start+1)
     return result.strip()
             
