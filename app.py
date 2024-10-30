@@ -9,6 +9,34 @@ def hello_world_fn(username: str) -> tuple[str, str]:
         return f"opus! some exception {e}\n{traceback.format_exc()}", "FAILED"
 
 
+def html_parser(html: str) -> str:
+    result = ''
+    start = html.find('<')
+    stage = 0
+    inside_tag = 0
+    while start >=0:
+        if 'p>' == html[start+1:start+3]:
+            pre = start+3
+            stage += 1
+        elif '/p>' == html[start+1:start+4]:
+            content = html[pre:start].strip()
+            if content:
+                result += html[pre:start].strip() + '\n'
+            stage -= 1
+        elif stage > 0:
+            if inside_tag <= 0:
+                content = html[pre:start].strip()
+                if content:
+                    result += html[pre:start].strip() + '\n'
+            if '/' == html[start+1]:
+                inside_tag -= 1
+            else:
+                inside_tag += 1
+            pre = html.find('>', start)+1
+        start = html.find('<', start+1)
+    return result.strip()
+            
+
 def main() -> None:
     with gr.Blocks(title="DeepLang Data test project") as demo:
         with gr.Tab("hello world 0"):
@@ -33,6 +61,17 @@ def main() -> None:
                 fn=hello_world_fn,
                 inputs=raw_input,
                 outputs=[pack_output, status_output],
+            )
+
+        with gr.Tab("html parser"):
+            raw_input = gr.Textbox(lines=10, placeholder="HTML data", label="")
+            parse_output = gr.Textbox(label="输出")
+
+            btn = gr.Button("开始转换")
+            btn.click(
+                fn=html_parser,
+                inputs=raw_input,
+                outputs=[parse_output],
             )
 
     demo.queue(default_concurrency_limit=100).launch(
